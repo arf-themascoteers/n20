@@ -4,9 +4,9 @@ pip install -r requirements.txt
 
 **Run**
 
-Run launch.py 
+Run main.py 
 
 
 **Screenshot**
 
-![ckd](ckd.png)
+![ckd](ss.png)
