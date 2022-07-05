@@ -5,18 +5,16 @@ from pandas.api.types import is_string_dtype, is_numeric_dtype
 import torch
 
 
-class ApolloDataset(Dataset):
+class SahaDataset(Dataset):
     def __init__(self, is_train):
         self.TRAIN_RATIO = 2
         self.NAN_TOLERANCE = 0.5
         self.is_train = is_train
-        self.file_location = "kidney_disease.csv"
-        csv_data = pd.read_csv("kidney_disease.csv")
+        self.file_location = "saha.csv"
+        csv_data = pd.read_csv("saha.csv")
         self.total = len(csv_data)
 
         df = pd.DataFrame(csv_data)
-        df = df.drop(columns=["id"])
-        df = self._omit_empty_columns(df)
         df = self._normalize(df)
 
         df.to_csv("out.csv")
@@ -47,7 +45,7 @@ class ApolloDataset(Dataset):
             break
 
         self.samples = torch.zeros((self.count, self.x_dim))
-        self.targets = torch.zeros(self.count, dtype=torch.long)
+        self.targets = torch.zeros(self.count, dtype=torch.float32)
 
         current_index = 0
         for index, row in df.iterrows():
@@ -57,7 +55,7 @@ class ApolloDataset(Dataset):
             if is_train is False and mod != 0:
                 continue
             last_cell = row[len(row)-1]
-            self.targets[current_index] = last_cell.argmax()
+            self.targets[current_index] = last_cell
             start_index = 0
             end_index = 0
             for i in range(len(row)-1):
@@ -90,20 +88,9 @@ class ApolloDataset(Dataset):
                 df = self._normalize_string(df, col)
         return df
 
-    def _remove_nan(self, array):
-        index = -1
-        for i in range(len(array)):
-            element = array[i]
-            if element!= element:
-                index = i
-                break
-        if index != -1:
-            array.remove(array[index])
-
     def _normalize_string(self,df, col):
         df[col] = df[col].str.strip()
         uniques = list(df[col].unique())
-        self._remove_nan(uniques)
 
         for i in range(len(df[col])):
             str = df[col][i]
@@ -117,27 +104,18 @@ class ApolloDataset(Dataset):
         x = df[[col]].values.astype(float)
         min_max_scaler = preprocessing.MinMaxScaler()
         x_scaled = min_max_scaler.fit_transform(x)
-        df_normalized = df
-        df_normalized[col] = x_scaled
-        mean = df[col].mean()
-        df.fillna({col:mean}, inplace=True)
+        df[col] = x_scaled
         return df
 
-    def _omit_empty_columns(self, df):
-        omit_list = []
-        for col in df.columns:
-            count_nan = df[col].isna().sum()
-            ratio = count_nan / self.total
-            if ratio > self.NAN_TOLERANCE:
-                omit_list.append(col)
-        return df.drop(columns=omit_list)
-
-
 if __name__ == "__main__":
-    d = ApolloDataset(is_train=True)
+    d = SahaDataset(is_train=True)
     from torch.utils.data import DataLoader
-    dl = DataLoader(d, batch_size=3)
+    dl = DataLoader(d, batch_size=20000)
     for x,y in dl:
         print(x.shape)
+        print(y)
+        print(torch.max(x))
+        print(torch.min(x))
+        exit(0)
 
 
