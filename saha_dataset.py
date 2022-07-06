@@ -9,8 +9,8 @@ from sklearn import model_selection
 class SahaDataset(Dataset):
     def __init__(self, is_train):
         self.is_train = is_train
-        self.file_location = "saha.csv"
-        csv_data = pd.read_csv("saha.csv")
+        self.file_location = "saha2.csv"
+        csv_data = pd.read_csv(self.file_location)
         self.total = len(csv_data)
         df = pd.DataFrame(csv_data)
         df = self._preprocess(df)
